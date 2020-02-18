@@ -1,0 +1,48 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+html {
+  height: 100vh;
+  font-family: "Baloo Bhai", sans-serif;
+  background-color: #434e5e;
+}
+
+body {
+  width: 100%;
+  height: 100%;
+  color: white;
+}
+
+.center {
+  text-align: center;
+}
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 50px;
+}
+
+.topTitle {
+  margin-bottom: 10px;
+}
+canvas {
+  background-color: white;
+  width: 800px;
+  height: 500px;
+}
+
+.controlRecorderSection {
+  margin-top: 20px;
+}
+button {
+  background-color: #55595c;
+  border: none;
+  padding: 10px 50px;
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: 4px;
+  color: white;
+}

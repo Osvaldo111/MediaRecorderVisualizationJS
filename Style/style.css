@@ -46,3 +46,11 @@ button {
   border-radius: 4px;
   color: white;
 }
+
+article {
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}

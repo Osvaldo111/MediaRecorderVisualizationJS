@@ -8,7 +8,11 @@ const reproduce = document.getElementById("reproduce");
 const soundClips = document.getElementById("soundClips");
 
 function init() {
-  //   processAudio();
+  // Reproduce with bttn
+  // reproduce.onclick = () => {
+  //   var audio = document.getElementById("audioOne");
+  //   audio.play();
+  // };
   record.onclick = () => processAudio();
 }
 init();
@@ -26,12 +30,19 @@ function processAudio() {
 
       // Success callback
       .then(function(stream) {
+        // Store the audio
+        let chunks = [];
         const mediaRecorder = new MediaRecorder(stream);
         startRecording(mediaRecorder);
+
         stop.onclick = () => stopRecording(mediaRecorder);
         // This is fire automatically after MediaRecorder
         // method stop() is called.
-        mediaRecorder.onstop = () => onStopRecording();
+        mediaRecorder.onstop = () => onStopRecording(chunks);
+        //This method is fire when the MediaRecorder delivers data
+        // to the application
+        mediaRecorder.ondataavailable = () =>
+          onDataAvalRecording(event, chunks);
       })
 
       // Error callback
@@ -72,7 +83,7 @@ function stopRecording(mediaRecorder) {
  * This is designed to be used with the MediaRecorder
  * API after the stop method of this API has been called.
  */
-function onStopRecording() {
+function onStopRecording(chunks) {
   console.log("recorder stopped FIRE automatically");
   const clipName = prompt("Enter a name for your sound clip");
 
@@ -90,8 +101,29 @@ function onStopRecording() {
   clipContainer.appendChild(clipLabel);
   clipContainer.appendChild(deleteButton);
   soundClips.appendChild(clipContainer);
+
+  const blob = new Blob(chunks, { type: "audio/ogg; codecs=opus" });
+  chunks = [];
+  const audioURL = window.URL.createObjectURL(blob);
+  audio.src = audioURL;
+  audio.id = "audioOne";
+
+  deleteButton.onclick = function(event) {
+    let evtTgt = event.target;
+    evtTgt.parentNode.parentNode.removeChild(evtTgt.parentNode);
+  };
 }
 
+/**
+ * This function is designed to run in response
+ * to the Blob data being made available for use.
+ * This has to be implemented with the "ondataavailable"
+ * method of the MediaStream Recording API.
+ */
+function onDataAvalRecording(event, chunks) {
+  console.log("On data available");
+  chunks.push(event.data);
+}
 function example() {
   alert();
 }

@@ -14,6 +14,10 @@ function init() {
   //   audio.play();
   // };
   record.onclick = () => processAudio();
+  let arr = [4, 9];
+
+  let RMSresult = calculateRMS(arr);
+  console.log(RMSresult);
 }
 init();
 
@@ -43,6 +47,18 @@ function processAudio() {
         // to the application
         mediaRecorder.ondataavailable = () =>
           onDataAvalRecording(event, chunks);
+
+        /**
+         *
+         */
+
+        testing(stream);
+
+        // analyser.fftSize = 2048;
+        // var bufferLength = analyser.frequencyBinCount;
+        // var dataArray = new Uint8Array(bufferLength);
+        // analyser.getByteTimeDomainData(dataArray);
+        // console.log(bufferLength);
       })
 
       // Error callback
@@ -124,6 +140,58 @@ function onDataAvalRecording(event, chunks) {
   console.log("On data available");
   chunks.push(event.data);
 }
-function example() {
-  alert();
+
+function drawGraph(stream) {
+  var canvas = document.getElementById("canvas");
+  console.log("Graph");
+
+  console.log("This is the buffer", bufferLength);
+  // console.log("Data array", dataArray);
+
+  canvas.clearRect(0, 0, WIDTH, HEIGHT);
+}
+
+function testing(stream) {
+  var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  var analyser = audioCtx.createAnalyser();
+  var source = audioCtx.createMediaStreamSource(stream);
+  analyser.fftSize = 2048;
+
+  var bufferLength = analyser.frequencyBinCount;
+  console.log("The buffer", bufferLength);
+  var dataArray = new Uint8Array(bufferLength);
+  source.connect(analyser);
+
+  // console.log("The array: ", dataArray);
+  var counter = 0;
+  insiderFunc();
+  function insiderFunc() {
+    counter++;
+    if (counter < 60) {
+      let soundAmplitud = calculateRMS(dataArray);
+      console.log(soundAmplitud);
+    }
+
+    analyser.getByteTimeDomainData(dataArray);
+    requestAnimationFrame(insiderFunc);
+  }
+}
+
+// Source: https://www.geeksforgeeks.org/rms-value-of-array-in-javascript/
+function calculateRMS(arr) {
+  // var arr = Array.from(arr);
+
+  // Map will return another array with each
+  // element corresponding to the elements of
+  // the original array mapped according to
+  // some relation
+  let Squares = arr.map(val => val * val);
+
+  // Function reduce the array to a value
+  // Here, all the elements gets added to the first
+  // element which acted as the accumulator initially.
+  let Sum = Squares.reduce((acum, val) => acum + val);
+  // console.log("Sum: ", Sum);
+  Mean = Sum / arr.length;
+  return Math.sqrt(Mean);
 }

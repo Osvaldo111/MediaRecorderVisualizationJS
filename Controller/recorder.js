@@ -16,6 +16,7 @@ function init() {
   record.onclick = () => processAudio();
   var resultOne = amplitudToOneHundred(100);
   console.log(resultOne);
+  drawGraphInCanvas();
 }
 init();
 /**
@@ -60,6 +61,72 @@ function testing(stream) {
   }
 }
 
+//https://codepen.io/AdamBlum/pen/hIKnm
+function drawGraphInCanvas() {
+  var canvas = document.getElementById("canvas"),
+    context = canvas.getContext("2d"),
+    width = canvas.width,
+    height = canvas.height;
+
+  var stats = [40, 65, 0, 120, 250, 87, 100, 42];
+
+  context.translate(0, height);
+  context.scale(1, -1);
+
+  // context.fillStyle = "#f6f6f6";
+  // context.fillRect(0, 0, width, height);
+
+  var left = 0,
+    prev_stat = stats[0],
+    move_left_by = 10;
+
+  for (stat in stats) {
+    the_stat = stats[stat];
+
+    context.beginPath();
+    context.moveTo(left, prev_stat);
+    context.lineTo(left + move_left_by, the_stat);
+    context.lineWidth = 1;
+    context.lineCap = "round";
+
+    context.stroke();
+
+    prev_stat = the_stat;
+    left += move_left_by;
+  }
+  // var canvas = document.getElementById("canvas");
+  // var arryRandom = [100, 80, 150, 125, 130, 50];
+
+  // var width = canvas.width;
+  // var height = canvas.height;
+  // // canvas.width = width;
+  // // canvas.height = height;
+
+  // var ctx = canvas.getContext("2d");
+  // console.log(width, " ", height);
+
+  // ctx.translate(0, height);
+  // ctx.scale(1, -1);
+
+  // ctx.beginPath();
+  // ctx.moveTo(5, 0);
+  // ctx.lineTo(5, 150);
+  // ctx.lineWidth = "5";
+  // ctx.strokeStyle = "green";
+  // ctx.stroke();
+
+  // ctx.beginPath();
+  // ctx.moveTo(11, 0);
+  // ctx.lineTo(11, 150);
+
+  // ctx.stroke();
+
+  // ctx.beginPath();
+  // ctx.moveTo(17, 0);
+  // ctx.lineTo(17, 150);
+
+  // ctx.stroke();
+}
 /**
  *
  * @param {int} num

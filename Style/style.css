@@ -30,8 +30,8 @@ body {
 }
 canvas {
   background-color: white;
-  width: 800px;
-  height: 500px;
+  /* width: 800px;
+  height: 500px; */
 }
 
 .controlRecorderSection {

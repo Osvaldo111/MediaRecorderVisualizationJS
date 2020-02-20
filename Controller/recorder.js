@@ -14,12 +14,59 @@ function init() {
   //   audio.play();
   // };
   record.onclick = () => processAudio();
-  let arr = [4, 9];
-
-  let RMSresult = calculateRMS(arr);
-  console.log(RMSresult);
+  var resultOne = amplitudToOneHundred(100);
+  console.log(resultOne);
 }
 init();
+/**
+ *
+ * https://developer.mozilla.org/en-US/docs/Web/API/AnalyserNode
+ * @param {*} stream
+ */
+function testing(stream) {
+  var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  var analyser = audioCtx.createAnalyser();
+  analyser.minDecibels = -90;
+  analyser.maxDecibels = -10;
+  analyser.smoothingTimeConstant = 0;
+  var source = audioCtx.createMediaStreamSource(stream);
+  source.connect(analyser);
+  // This is converted half the value
+  // for technical resons.
+  analyser.fftSize = 32;
+
+  var bufferLength = analyser.frequencyBinCount;
+  console.log("The buffer", bufferLength);
+  var dataArray = new Uint8Array(bufferLength);
+
+  var arrayofAmplitud = [];
+  // insiderFunc();
+  var counerOfInterval = 0;
+  var myInterval = setInterval(function() {
+    counerOfInterval++;
+    if (counerOfInterval === 30) clearInterval(myInterval);
+    insiderFunc();
+  }, 1000);
+
+  function insiderFunc() {
+    analyser.getByteFrequencyData(dataArray);
+
+    let soundAmplitud = calculateTheSoundAmplitud(dataArray); // calculateRMS(dataArray);
+    let hundredSoundAmplitued = amplitudToOneHundred(soundAmplitud);
+    arrayofAmplitud.push(hundredSoundAmplitued);
+    console.log("The Squared Result Sound Amplitud: ", hundredSoundAmplitued);
+    console.log("Array Sound Amplitud: ", arrayofAmplitud);
+    console.log(dataArray);
+  }
+}
+
+/**
+ *
+ * @param {int} num
+ */
+function amplitudToOneHundred(num) {
+  return Math.round((num / 255) * 100);
+}
 
 function processAudio() {
   if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -151,47 +198,68 @@ function drawGraph(stream) {
   canvas.clearRect(0, 0, WIDTH, HEIGHT);
 }
 
-function testing(stream) {
-  var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  var analyser = audioCtx.createAnalyser();
-  var source = audioCtx.createMediaStreamSource(stream);
-  analyser.fftSize = 2048;
+/**
+ * This function calculates the sound amplitud
+ * according to the data provided by the method
+ * getByteFrequencyData which copies the current
+ * frequency data into the array provided as a parameter
+ * in this function. This function only takes the first two
+ * values of the array to determine the average of the
+ * amplitud.
+ * @param {Array} arr
+ */
+function calculateTheSoundAmplitud(arr) {
+  // Conver the array to a 16-bit to
+  // allow storage
+  var dataArray = new Uint16Array(arr);
 
-  var bufferLength = analyser.frequencyBinCount;
-  console.log("The buffer", bufferLength);
-  var dataArray = new Uint8Array(bufferLength);
-  source.connect(analyser);
-
-  // console.log("The array: ", dataArray);
-  var counter = 0;
-  insiderFunc();
-  function insiderFunc() {
-    counter++;
-    if (counter < 60) {
-      let soundAmplitud = calculateRMS(dataArray);
-      console.log(soundAmplitud);
+  let counterInArray = 0;
+  let Squares = dataArray.map((val, index) => {
+    if (index < 2) {
+      counterInArray++;
+      return val;
     }
-
-    analyser.getByteTimeDomainData(dataArray);
-    requestAnimationFrame(insiderFunc);
-  }
-}
-
-// Source: https://www.geeksforgeeks.org/rms-value-of-array-in-javascript/
-function calculateRMS(arr) {
-  // var arr = Array.from(arr);
-
-  // Map will return another array with each
-  // element corresponding to the elements of
-  // the original array mapped according to
-  // some relation
-  let Squares = arr.map(val => val * val);
+  });
 
   // Function reduce the array to a value
   // Here, all the elements gets added to the first
   // element which acted as the accumulator initially.
   let Sum = Squares.reduce((acum, val) => acum + val);
-  // console.log("Sum: ", Sum);
-  Mean = Sum / arr.length;
-  return Math.sqrt(Mean);
+  // console.log("***** Square: ", Squares);
+  // console.log("***** Toal Sum: ", Sum);
+  // console.log("***** Medium: ", Sum / counterInArray);
+
+  var averageMean = Sum / counterInArray;
+  return averageMean;
 }
+
+// Source: https://www.geeksforgeeks.org/rms-value-of-array-in-javascript/
+// function calculateRMS(arr) {
+//   // Conver the array to a 16-bit to
+//   // allow storage
+//   var dataArray = new Uint16Array(arr);
+
+//   // Map will return another array with each
+//   // element corresponding to the elements of
+//   // the original array mapped according to
+//   // some
+//   let counterInArray = 0;
+//   let Squares = dataArray.map((val, index) => {
+//     if (val > 0) {
+//       counterInArray++;
+//       return val * val;
+//     }
+//   });
+//   console.log("Counter in Array: ", counterInArray);
+
+//   // Function reduce the array to a value
+//   // Here, all the elements gets added to the first
+//   // element which acted as the accumulator initially.
+//   let Sum = Squares.reduce((acum, val) => acum + val);
+
+//   console.log("***** Square: ", Squares);
+//   // console.log("***** Toal Sum: ", Sum);
+//   console.log("***** Medium: ", Sum / counterInArray);
+//   Mean = Sum / counterInArray;
+//   return Math.sqrt(Mean);
+// }

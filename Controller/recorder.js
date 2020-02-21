@@ -1,13 +1,15 @@
-/**
- * Initialize the app
- */
-
 const record = document.getElementById("record");
 const stop = document.getElementById("stop");
 const reproduce = document.getElementById("reproduce");
 const soundClips = document.getElementById("soundClips");
-const TIME_TO_RECORD = 5; // seconds
-var arrayofAmplitud = [10, 20];
+const timeLeftNode = document.getElementById("timeLeft");
+const TIME_TO_RECORD = 30; // seconds
+var ARRAY_OF_AMPLITUD = [];
+var IS_TIME_COMPLETED = false;
+
+/**
+ * Initialize the app
+ */
 function init() {
   // Reproduce with bttn
   // reproduce.onclick = () => {
@@ -15,13 +17,11 @@ function init() {
   //   audio.play();
   // };
   record.onclick = () => processAudio();
-  var resultOne = amplitudToOneHundred(100);
-  console.log(resultOne);
-  var arrayTest = [2, 47, 89, 52, 14, 78, 12, 18, 12, 19, 10, 15, 74, 12, 89];
 
-  drawGraphInCanvas(arrayofAmplitud);
+  // drawGraphInCanvas();
 }
 init();
+
 /**
  * This function is designed to connect the stream to the AudioContext
  * and the AnalyserNode to get the frequency data. This function sets the
@@ -53,11 +53,11 @@ function connectionToStreamSource(stream) {
   var bufferLength = analyser.frequencyBinCount;
   var dataArray = new Uint8Array(bufferLength);
 
-  var counerOfInterval = 0;
+  var counterOfInterval = 0;
   var myInterval = setInterval(function() {
-    counerOfInterval++;
+    counterOfInterval++;
     getFrequencyData(analyser, dataArray);
-    if (counerOfInterval === TIME_TO_RECORD) clearInterval(myInterval);
+    if (counterOfInterval === TIME_TO_RECORD) clearInterval(myInterval);
   }, 1000);
 }
 
@@ -75,17 +75,7 @@ function getFrequencyData(analyser, dataArray) {
   analyser.getByteFrequencyData(dataArray);
   let soundAmplitud = calculateTheSoundAmplitud(dataArray);
   let hundredSoundAmplitued = amplitudToOneHundred(soundAmplitud);
-  arrayofAmplitud.push(hundredSoundAmplitued);
-  // console.log("The Squared Result Sound Amplitud: ", hundredSoundAmplitued);
-  // console.log("Array Sound Amplitud: ", arrayofAmplitud);
-  // console.log(dataArray);
-  // drawGraphInCanvas(arrayofAmplitud);
-  getFinalFrequencyData(arrayofAmplitud);
-  console.log("The amplitud array: ", arrayofAmplitud);
-}
-
-function getFinalFrequencyData(arr) {
-  return arr;
+  ARRAY_OF_AMPLITUD.push(hundredSoundAmplitued);
 }
 
 /**
@@ -94,55 +84,75 @@ function getFinalFrequencyData(arr) {
  * //https://codepen.io/AdamBlum/pen/hIKnm
  * @param {Array} arr
  */
-function drawGraphInCanvas(amplitudRecord) {
-  // requestAnimationFrame(drawGraphInCanvas);
-  console.log("Drawing", arrayofAmplitud);
+function drawGraphInCanvas() {
   var canvas = document.getElementById("canvas"),
     context = canvas.getContext("2d"),
     width = canvas.width,
-    height = canvas.height,
-    arrayLenght = amplitudRecord.length;
+    height = canvas.height;
 
-  /**
-   * 30 is the fixed number
-   */
-  // console.log("Array Length: ", 30);
-  // console.log("Canvas Width: ", width, " Canvas Height: ", height);
-  // console.log("Pixels for item X axis: ", width / 30);
-  var distanceMovement = width / 30;
-
-  // var amplitudRecord = [40, 65, 0, 120, 250, 87, 100, 42];
-
-  context.translate(0, height);
+  // Mantain the translate and scale here
+  // to avoid unexpected behaviors.
+  // Move the graph 50px up
+  context.translate(0, height - 50);
   context.scale(1, -1);
 
-  function drawPerformace() {
-    requestAnimationFrame(drawPerformace);
-    console.log("Hello");
-    var left = 0,
-      previousValue = amplitudRecord[0],
-      moveLeftBy = distanceMovement;
+  reqAnimationFrames();
+}
 
-    var colors = ["red", "green", "blue", "pink"];
-    for (stat in amplitudRecord) {
-      currentValue = amplitudRecord[stat];
+/**
+ * This function uses the requestAnimationFrame
+ * method to draw the graph dynamically according to the
+ * values provided by the ARRAY_OF_AMPLITUD.
+ * https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame
+ */
+function reqAnimationFrames() {
+  var reqAnimation = requestAnimationFrame(reqAnimationFrames);
+  var canvas = document.getElementById("canvas"),
+    context = canvas.getContext("2d"),
+    width = canvas.width,
+    height = canvas.height;
 
-      context.beginPath();
-      context.moveTo(left, previousValue);
-      context.lineTo(left + moveLeftBy, currentValue);
-      context.lineWidth = 10;
-      context.lineCap = "round";
+  // Divided in 30 for the 30 seconds limit
+  var distanceMovement = width / 30;
 
-      var strokeColor = getRandomColor(); //   "rgb(" + currentValue + "," + currentValue + "," + currentValue + ")";
-      context.strokeStyle = strokeColor;
+  var left = 0,
+    // Prpoportional to the canvas height
+    // removing 100px half from top and bottom
+    previousValue = scaleToRange(ARRAY_OF_AMPLITUD[0], height - 100);
+  moveLeftBy = distanceMovement;
 
-      context.stroke();
+  for (stat in ARRAY_OF_AMPLITUD) {
+    currentValue = ARRAY_OF_AMPLITUD[stat];
 
-      previousValue = currentValue;
-      left += moveLeftBy;
-    }
+    // Prpoportional to the canvas height
+    // removing 100px half from top and bottom
+    var proportionalHeight = scaleToRange(currentValue, height - 100);
+
+    context.beginPath();
+    context.moveTo(left, previousValue);
+    context.lineTo(left + moveLeftBy, proportionalHeight);
+    context.lineWidth = 7;
+    context.lineCap = "round";
+
+    var strokeColor = getRandomColor();
+    context.strokeStyle = strokeColor;
+
+    context.stroke();
+
+    previousValue = proportionalHeight;
+    left += moveLeftBy;
   }
-  drawPerformace();
+
+  // Check when the time is completed.
+  // to stop the graph.
+  if (IS_TIME_COMPLETED) {
+    cancelAnimationFrame(reqAnimation);
+  }
+}
+
+function scaleToRange(valueToScale, scale, range = 100) {
+  // alert(rangeScale);
+  return (valueToScale / range) * scale;
 }
 
 /**
@@ -195,7 +205,7 @@ function processAudio() {
         const mediaRecorder = new MediaRecorder(stream);
         startRecording(mediaRecorder);
 
-        stop.onclick = () => stopRecording(mediaRecorder);
+        // stop.onclick = () => stopRecording(mediaRecorder);
         // This is fire automatically after MediaRecorder
         // method stop() is called.
         mediaRecorder.onstop = () => onStopRecording(chunks);
@@ -210,14 +220,25 @@ function processAudio() {
         // This stop the recording, although it does not
         // stop the stream source.
         var counterStopRecording = 0;
+        var timeLeft = 30;
+        timeLeftNode.innerHTML = "Time Left: " + timeLeft + " seconds";
+        record.disabled = true;
+
         var timeToStopRecording = setInterval(function() {
+          timeLeft--;
+          timeLeftNode.innerHTML = "Time Left: " + timeLeft + " seconds";
           counterStopRecording++;
-          console.log(counterStopRecording);
+
           if (counterStopRecording === TIME_TO_RECORD) {
+            IS_TIME_COMPLETED = true;
             stopRecording(mediaRecorder);
+            record.disabled = false;
             clearInterval(timeToStopRecording);
           }
         }, 1000);
+
+        //
+        drawGraphInCanvas();
       })
       // Error callback
       .catch(function(err) {
@@ -263,7 +284,6 @@ function stopRecording(mediaRecorder) {
  * https://developer.mozilla.org/en-US/docs/Web/API/MediaRecorder/onstop
  */
 function onStopRecording(chunks) {
-  console.log("recorder stopped FIRE automatically");
   const clipName = prompt("Enter a name for your sound clip");
 
   const clipContainer = document.createElement("article");
